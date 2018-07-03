@@ -13,6 +13,9 @@ import tensorflow as tf
 import numpy as np
 import gym
 import importlib
+import json
+import io
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -60,8 +63,14 @@ def main():
     print('mean return', np.mean(returns))
     print('std of return', np.std(returns))
 
-    expert_data = {'observations': np.array(observations),
-                    'actions': np.array(actions)}
+    expert_data = {'observationSpace': env.observation_space.shape[0],
+                   'actionSpace': env.action_space.shape[0],
+                   'observations': [obs.tolist() for obs in observations],
+                   'actions': [act.tolist() for act in actions]}
+
+    with io.open('experts/'+module_name.split('.')[-1:][0]+'.json', 'w') as fp:
+        json.dump(expert_data, fp)
+
 
 if __name__ == '__main__':
     main()
