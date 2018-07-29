@@ -41,7 +41,7 @@ def build_mlp(
     with tf.variable_scope(scope):
         # YOUR_CODE_HERE
         input_layer = input_placeholder
-        for i in range(n_layers):
+        for _ in range(n_layers):
             input_layer = tf.layers.dense(input_layer, size, activation)
         return tf.layers.dense(input_layer, output_size, output_activation)
 
@@ -179,7 +179,6 @@ def train_PG(exp_name='',
         sy_sampled_ac = tf.multinomial(logits=sy_logits_na, num_samples=1)  # Hint: Use the tf.multinomial op
         sy_sampled_ac = tf.reshape(sy_sampled_ac, [-1])
         sy_logprob_n = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=sy_ac_na, logits=sy_logits_na)
-
     else:
         # YOUR_CODE_HERE
         sy_mean = build_mlp(sy_ob_no, ac_dim, "hw2_policy", n_layers=n_layers, size=size)
@@ -187,18 +186,16 @@ def train_PG(exp_name='',
         sy_logstd = tf.Variable(tf.zeros([1, ac_dim]), name="policy/logstd", dtype=tf.float32)
         sy_std = tf.exp(sy_logstd)
         sy_sampled_ac = sy_mean + sy_std*tf.random_normal(tf.shape(sy_mean))
-
-        sy_logprob_n = -(sy_logstd + tf.reduce_mean())
         # Hint: Use the log probability under a multivariate gaussian.
-
+        sy_logprob_n = -(sy_logstd + tf.reduce_mean(tf.multiply(tf.pow(sy_ob_no-sy_mean, 2), sy_logstd)))
 
 
     #========================================================================================#
     #                           ----------SECTION 4----------
     # Loss Function and Training Operation
     #========================================================================================#
-
-    loss = tf.multiply(sy_logprob_n, sy_adv_n) # Loss function that we'll differentiate to get the policy gradient.
+    # Loss function that we'll differentiate to get the policy gradient.
+    loss = tf.multiply(sy_logprob_n, sy_adv_n)
     update_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 
@@ -343,7 +340,7 @@ def train_PG(exp_name='',
             else:
                 for p in paths:
                     rwds = p["reward"]
-                    q = 0;
+                    q = 0
                     q_t = []
                     for r in reversed(rwds):
                         q = r + gamma*q

@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# vcode
+.vscode
+
+# training result data
+hw2/data
